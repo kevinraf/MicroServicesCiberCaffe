@@ -41,26 +41,22 @@ spring:
           uri: lb://ms-internet
           predicates:
             - Path=/internet/**
+            - Path=/clientes/**
+            - Path=/maquinas/**
+            - Path=/sesiones/**
           filters:
-            - StripPrefix=1
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: internetCB
-                fallbackUri: forward:/fallback/internet
 
         # === Pago (protegido) ===
         - id: ms-pago-route
           uri: lb://ms-pago
           predicates:
             - Path=/pago/**
+            - Path=/metodos-pago/**
+            - Path=/pagos/**
           filters:
-            - StripPrefix=1
             - AuthFilter
-            - name: CircuitBreaker
-              args:
-                name: pagoCB
-                fallbackUri: forward:/fallback/pago
+
 
         # === Endpoints públicos comunes (swagger/h2) sin Auth ===
         - id: swagger-ui
