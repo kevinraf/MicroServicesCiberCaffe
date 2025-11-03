@@ -37,7 +37,7 @@ spring:
 
 
         # === Internet (protegido) ===
-        - id: ms-internet-route
+        - id: ms-internet
           uri: lb://ms-internet
           predicates:
             - Path=/internet/**
@@ -48,7 +48,7 @@ spring:
             - AuthFilter
 
         # === Pago (protegido) ===
-        - id: ms-pago-route
+        - id: ms-pago
           uri: lb://ms-pago
           predicates:
             - Path=/pago/**
@@ -80,22 +80,4 @@ spring:
           filters:
             - SetPath=/h2-console
 
-resilience4j:
-  circuitbreaker:
-    instances:
-      internetCB:
-        registerHealthIndicator: true
-        slidingWindowType: TIME_BASED
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 4
-        permittedNumberOfCallsInHalfOpenState: 3
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-      pagoCB:
-        registerHealthIndicator: true
-        slidingWindowType: TIME_BASED
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 4
-        permittedNumberOfCallsInHalfOpenState: 3
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
+
