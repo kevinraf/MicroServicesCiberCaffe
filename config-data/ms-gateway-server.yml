@@ -1,5 +1,6 @@
 server:
   port: 9090
+  forward-headers-strategy: framework  # <-- a nivel raíz
 
 spring:
   application:
@@ -20,11 +21,12 @@ spring:
           filters:
             - StripPrefix=1
 
-        # === INTERNET: DOCS/H2 PÚBLICO ===
+        # === INTERNET: DOCS/H2 PÚBLICO (debe ir ANTES que el protegido) ===
         - id: ms-internet-docs
           uri: lb://ms-internet
           predicates:
-            - Path=/internet/v3/api-docs, /internet/doc/**, /internet/h2-console/**
+            # múltiples patrones en UNA sola entrada Path, separados por coma (sin espacios)
+            - Path=/internet/v3/api-docs,/internet/doc/**,/internet/h2-console/**
           filters:
             - StripPrefix=1
 
@@ -35,13 +37,13 @@ spring:
             - Path=/internet/**
           filters:
             - StripPrefix=1
-            - AuthFilter   # <- se exige JWT aquí
+            - AuthFilter   # exige JWT
 
-        # === PAGO: DOCS PÚBLICO ===
+        # === PAGO: DOCS/H2 PÚBLICO (antes que protegido) ===
         - id: ms-pago-docs
           uri: lb://ms-pago
           predicates:
-            - Path=/pago/v3/api-docs, /pago/doc/**, /pago/h2-console/**
+            - Path=/pago/v3/api-docs,/pago/doc/**,/pago/h2-console/**
           filters:
             - StripPrefix=1
 
@@ -53,6 +55,21 @@ spring:
           filters:
             - StripPrefix=1
             - AuthFilter
+
+# Opcional: agregar agregador de Swagger en el gateway (si usas springdoc webflux en el gateway)
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /docs
+    urls:
+      - name: ms-internet
+        url: /internet/v3/api-docs
+      - name: ms-pago
+        url: /pago/v3/api-docs
+      - name: ms-auth
+        url: /auth/v3/api-docs
 
 eureka:
   client:
