@@ -57,27 +57,3 @@ spring:
           filters:
             - AuthFilter
 
-
-        # === Endpoints públicos comunes (swagger/h2) sin Auth ===
-        - id: swagger-ui
-          uri: no://op
-          predicates:
-            - Path=/doc/swagger-ui.html
-          filters:
-            - SetPath=/doc/swagger-ui.html
-
-        - id: api-docs
-          uri: no://op
-          predicates:
-            - Path=/v3/api-docs/**
-          filters:
-            - SetPath=/v3/api-docs
-
-        - id: h2-console
-          uri: no://op
-          predicates:
-            - Path=/h2-console/**
-          filters:
-            - SetPath=/h2-console
-
-
