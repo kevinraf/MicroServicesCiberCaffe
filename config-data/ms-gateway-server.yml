@@ -6,17 +6,22 @@ eureka:
     serviceUrl:
       #defaultZone: http://localhost:8090/eureka
       defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
-
   instance:
     #hostname: localhost
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
 spring:
+  application:
+    name: ms-gateway-server
+
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
 
       routes:
         # === Auth (público) ===
@@ -30,20 +35,18 @@ spring:
         - id: ms-internet
           uri: lb://ms-internet
           predicates:
-            - Path=/internet/**
             - Path=/clientes/**
             - Path=/maquinas/**
             - Path=/sesiones/**
           filters:
-            - AuthFilter
+
 
         # === Pago (protegido) ===
         - id: ms-pago
           uri: lb://ms-pago
           predicates:
-            - Path=/pago/**
             - Path=/metodos-pago/**
             - Path=/pagos/**
           filters:
-            - AuthFilter
+
 
