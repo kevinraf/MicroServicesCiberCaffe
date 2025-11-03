@@ -1,0 +1,114 @@
+server:
+  port: 9090
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+spring:
+  application:
+    name: ms-gateway-server
+
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+        # === Auth (público) ===
+        - id: ms-auth-route
+          uri: lb://ms-auth
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
+
+        # === Internet (protegido) ===
+        - id: ms-internet-route
+          uri: lb://ms-internet
+          predicates:
+            - Path=/internet/**
+          filters:
+            - StripPrefix=1
+            - AuthFilter
+            - name: CircuitBreaker
+              args:
+                name: internetCB
+                fallbackUri: forward:/fallback/internet
+
+        # === Pago (protegido) ===
+        - id: ms-pago-route
+          uri: lb://ms-pago
+          predicates:
+            - Path=/pago/**
+          filters:
+            - StripPrefix=1
+            - AuthFilter
+            - name: CircuitBreaker
+              args:
+                name: pagoCB
+                fallbackUri: forward:/fallback/pago
+
+        # === Endpoints públicos comunes (swagger/h2) sin Auth ===
+        - id: swagger-ui
+          uri: no://op
+          predicates:
+            - Path=/doc/swagger-ui.html
+          filters:
+            - SetPath=/doc/swagger-ui.html
+
+        - id: api-docs
+          uri: no://op
+          predicates:
+            - Path=/v3/api-docs/**
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: h2-console
+          uri: no://op
+          predicates:
+            - Path=/h2-console/**
+          filters:
+            - SetPath=/h2-console
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      internetCB:
+        registerHealthIndicator: true
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 4
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+      pagoCB:
+        registerHealthIndicator: true
+        slidingWindowType: TIME_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 4
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
