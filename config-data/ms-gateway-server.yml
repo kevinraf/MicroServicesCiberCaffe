@@ -38,7 +38,6 @@ spring:
             - Path=/clientes/**
             - Path=/maquinas/**
             - Path=/sesiones/**
-          filters:
 
 
         # === Pago (protegido) ===
@@ -47,6 +46,5 @@ spring:
           predicates:
             - Path=/metodos-pago/**
             - Path=/pagos/**
-          filters:
 
 
