@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.upeu.mspago.DTOs.PagoDTO;
+import pe.edu.upeu.mspago.DTOs.PagoListDTO;
 import pe.edu.upeu.mspago.DTOs.PagoRespDTO;
 import pe.edu.upeu.mspago.Entidad.EstadoPago;
 import pe.edu.upeu.mspago.Entidad.MetodoPago;
@@ -47,9 +48,10 @@ public class PagoServicioImpl implements PagoServicio {
         return toResp(p);
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public List<Pago> listar() {
-        return pagoRepo.findAll();
+    public List<PagoListDTO> listar() {
+        return pagoRepo.findAll().stream().map(this::toListDto).toList();
     }
 
     private PagoRespDTO toResp(Pago p){
@@ -58,5 +60,19 @@ public class PagoServicioImpl implements PagoServicio {
         r.setCodigoSesion(p.getCodigoSesion());
         r.setEstado(p.getEstado().name());
         return r;
+    }
+
+    private PagoListDTO toListDto(Pago p){
+        PagoListDTO d = new PagoListDTO();
+        d.setId(p.getId());
+        d.setCodigoSesion(p.getCodigoSesion());
+        d.setMaquinaCodigo(p.getMaquinaCodigo());
+        d.setClienteDni(p.getClienteDni());
+        d.setMonto(p.getMonto());
+        d.setMetodoPago(p.getMetodoPago()!=null ? p.getMetodoPago().getNombre() : null);
+        d.setEstado(p.getEstado().name());
+        d.setFechaPago(p.getFechaPago());
+        d.setObservacion(p.getObservacion());
+        return d;
     }
 }

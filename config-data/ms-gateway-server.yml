@@ -1,50 +1,64 @@
 server:
   port: 9090
 
-eureka:
-  client:
-    serviceUrl:
-      #defaultZone: http://localhost:8090/eureka
-      defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
-  instance:
-    #hostname: localhost
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-
 spring:
   application:
     name: ms-gateway-server
 
   cloud:
     gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-
+      discovery:
+        locator:
+          enabled: false   # evita rutas auto /ms-.../**
       routes:
         # === Auth (público) ===
-        - id: ms-auth-route
+        - id: ms-auth
           uri: lb://ms-auth
           predicates:
             - Path=/auth/**
+          filters:
+            - StripPrefix=1
 
-
-        # === Internet (protegido) ===
+        # === Internet (prefijo /internet) ===
         - id: ms-internet
           uri: lb://ms-internet
           predicates:
-            - Path=/clientes/**
-            - Path=/maquinas/**
-            - Path=/sesiones/**
+            - Path=/internet/**
+          filters:
+            - StripPrefix=1   # /internet/** -> /** en ms-internet
 
-
-        # === Pago (protegido) ===
+        # === Pago (prefijo /pago) ===
         - id: ms-pago
           uri: lb://ms-pago
           predicates:
-            - Path=/metodos-pago/**
-            - Path=/pagos/**
+            - Path=/pago/**
+          filters:
+            - StripPrefix=1   # /pago/** -> /** en ms-pago
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
+# 📚 Agregador Swagger del Gateway (OJO: bloque a nivel raíz)
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    urls:
+      - name: ms-internet
+        url: /internet/v3/api-docs
+      - name: ms-pago
+        url: /pago/v3/api-docs
+      - name: ms-auth
+        url: /auth/v3/api-docs
+
+# (Opcional) Actuators para monitoreo rápido
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
