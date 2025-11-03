@@ -4,20 +4,29 @@ server:
 eureka:
   client:
     serviceUrl:
+      #defaultZone: http://localhost:8090/eureka
       defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
+
   instance:
+    #hostname: localhost
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
 spring:
-  application:
-    name: ms-gateway-server
-
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true
 
       routes:
         # === Auth (público) ===
@@ -25,8 +34,7 @@ spring:
           uri: lb://ms-auth
           predicates:
             - Path=/auth/**
-          filters:
-            - StripPrefix=1
+
 
         # === Internet (protegido) ===
         - id: ms-internet-route
@@ -75,12 +83,6 @@ spring:
             - Path=/h2-console/**
           filters:
             - SetPath=/h2-console
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
 
 resilience4j:
   circuitbreaker:
