@@ -9,7 +9,8 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: false   # evita rutas auto /ms-.../**
+          enabled: false
+
       routes:
         # === Auth (público) ===
         - id: ms-auth
@@ -19,21 +20,39 @@ spring:
           filters:
             - StripPrefix=1
 
-        # === Internet (prefijo /internet) ===
+        # === INTERNET: DOCS/H2 PÚBLICO ===
+        - id: ms-internet-docs
+          uri: lb://ms-internet
+          predicates:
+            - Path=/internet/v3/api-docs, /internet/doc/**, /internet/h2-console/**
+          filters:
+            - StripPrefix=1
+
+        # === INTERNET: PROTEGIDO ===
         - id: ms-internet
           uri: lb://ms-internet
           predicates:
             - Path=/internet/**
           filters:
-            - StripPrefix=1   # /internet/** -> /** en ms-internet
+            - StripPrefix=1
+            - AuthFilter   # <- se exige JWT aquí
 
-        # === Pago (prefijo /pago) ===
+        # === PAGO: DOCS PÚBLICO ===
+        - id: ms-pago-docs
+          uri: lb://ms-pago
+          predicates:
+            - Path=/pago/v3/api-docs, /pago/doc/**, /pago/h2-console/**
+          filters:
+            - StripPrefix=1
+
+        # === PAGO: PROTEGIDO ===
         - id: ms-pago
           uri: lb://ms-pago
           predicates:
             - Path=/pago/**
           filters:
-            - StripPrefix=1   # /pago/** -> /** en ms-pago
+            - StripPrefix=1
+            - AuthFilter
 
 eureka:
   client:
@@ -41,24 +60,3 @@ eureka:
       defaultZone: ${EUREKA_URI:http://localhost:8090/eureka}
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-
-# 📚 Agregador Swagger del Gateway (OJO: bloque a nivel raíz)
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-    urls:
-      - name: ms-internet
-        url: /internet/v3/api-docs
-      - name: ms-pago
-        url: /pago/v3/api-docs
-      - name: ms-auth
-        url: /auth/v3/api-docs
-
-# (Opcional) Actuators para monitoreo rápido
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
